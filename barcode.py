@@ -4,6 +4,8 @@
 # - https://www.programiz.com/python-programming/docstrings
 # - https://blog.codacy.com/3-popular-python-style-guides/
 # - https://docs.python-guide.org/writing/structure/
+# - https://teclado.com/30-days-of-python/python-30-day-21-multiple-files/
+# - https://snarky.ca/why-you-should-use-python-m-pip/
 
 """
 This script generates PNG barcode images.
@@ -43,15 +45,15 @@ def str_to_digits(value: str) -> list[int]:
     '''
     Converts a string of digits to a list of integers.
 
-        Parameters
-        ----------
-            value : str
-                A sequence of digits
+    Parameters
+    ----------
+        value : str
+            A sequence of digits
 
-        Returns
-        -------
-            list[int]
-                The digits as integers
+    Returns
+    -------
+        list[int]
+            The digits as integers
     '''
     return [int(digit) for digit in list(value)]
 
@@ -59,14 +61,14 @@ class Barcode:
     """
     A class that represents a barcode.
 
-        Attributes
-        ----------
-            data : str
-                data to encode
-            options : dict[str, Any]
-                barcode options
-            name : str
-                barcode name
+    Attributes
+    ----------
+        data : str
+            data to encode
+        options : dict[str, Any]
+            barcode options
+        name : str
+            barcode name
     """
 
     def __init__(self, data: str, options: dict[str, Any], name: str):
@@ -120,23 +122,22 @@ class Barcode:
             str
                 The barcode text.
         """
-        return self.options.get('text', self.data)
+        return self.options.get('text', self.data) # .replace(/[A-D]/g, '')
 
     def encode(self) -> str:
         '''
         Encodes the data into an array of binary digits.
 
-            Returns
-            -------
-                str
-                    The encoded data
+        Returns
+        -------
+            str
+                The encoded data
         '''
-        return ''
+        return ""
 
 # See:
 # - https://lindell.me/JsBarcode/
 # - https://github.com/lindell/JsBarcode/tree/master/src/barcodes
-# - https://matplotlib.org/stable/gallery/images_contours_and_fields/barcode_demo.html
 
 CODABAR_DICT = {
     '0': "101010011",
@@ -195,56 +196,130 @@ class Codabar(Barcode):
         '''
         Determines if the data is valid.
 
-            Parameters
-            ----------
-                data : str
-                    Barcode data
+        Parameters
+        ----------
+            data : str
+                Barcode data
 
-            Returns
-            -------
-                boolean
-                    The encoded data
+        Returns
+        -------
+            boolean
+                The encoded data
         '''
         return re.search(r'^[0-9\-\$\:\.\+\/]+$', data) is not None
+
+    # @override
+    @property
+    def text(self) -> str:
+        """
+        The barcode text.
+
+        Returns
+        -------
+            str
+                The barcode text.
+        """
+        return self.options.get('text', re.sub(r"[A-D]", "", self.data))
 
     # @override
     def encode(self) -> str:
         '''
         Encodes the data into an array of binary digits.
 
-            Returns
-            -------
-                str
-                    The encoded data
+        Returns
+        -------
+            str
+                The encoded data
         '''
         return '0'.join([CODABAR_DICT[token] for token in self.data])
 
+# See:
+# - https://en.wikipedia.org/wiki/Universal_Product_Code
+# - https://github.com/lindell/JsBarcode/blob/master/src/barcodes/EAN_UPC/UPC.js
+class Upc(Barcode):
+    """
+    A class that represents a UPC barcode.
+
+    ...
+
+    Attributes
+    ----------
+        data : str
+            data to encode
+        options : dict[str, Any]
+            barcode options
+
+    Methods
+    -------
+        is_valid(data):
+            Determines if the data is valid
+        encode():
+            Encodes the data into an array of binary digits.
+    """
+
+    def __init__(self, data: str, options: dict[str, Any]):
+        if not self.is_valid(data):
+            raise ValueError(f"Not a valid UPC value: {data}")
+        super().__init__(data, options, 'codabar')
+
+    def is_valid(self, data: str) -> bool:
+        '''
+        Determines if the data is valid.
+
+        Parameters
+        ----------
+            data : str
+                Barcode data
+
+        Returns
+        -------
+            boolean
+                The encoded data
+        '''
+        return re.search(r'^[0-9]{11,12}$', data) is not None
+
+    # @override
+    def encode(self) -> str:
+        '''
+        Encodes the data into an array of binary digits.
+
+        Returns
+        -------
+            str
+                The encoded data
+        '''
+        return "" # implement
+
 U = TypeVar('U', bound=Barcode)
 
+# See: https://matplotlib.org/stable/gallery/images_contours_and_fields/barcode_demo.html
 def create_barcode(barcode: U, filename: str, dpi: int) -> list[int]:
     '''
     Returns the encoded barcode data and saves an image.
 
-        Parameters
-        ----------
-            barcode : Barcode
-                An instance of a Barcode
-            filename : str
-                Filename of image
-            dpi : int
-                DPI or dots per inch
+    Parameters
+    ----------
+        barcode : Barcode
+            An instance of a Barcode
+        filename : str
+            Filename of image
+        dpi : int
+            DPI or dots per inch
 
-        Returns
-        -------
-            encoded : list[int]
-                The encoded data
+    Returns
+    -------
+        encoded : list[int]
+            The encoded data
     '''
     encoded = str_to_digits(barcode.encode())
     pixel_per_bar = 4
     fig = plt.figure(figsize=(len(encoded) * pixel_per_bar / dpi, 2), dpi=dpi)
-    axes = fig.add_axes([0.1, 0.25, 0.8, 0.5])  # span the whole figure
-    axes.set_axis_off()
-    axes.imshow(np.array(encoded).reshape(1, -1),
+    ax = fig.add_axes([0.1, 0.25, 0.8, 0.5])  # span the whole figure
+    plt.xticks([])
+    plt.yticks([])
+    ax.spines[['top', 'right', 'bottom', 'left']].set_visible(False)
+    ax.set_xlabel(barcode.text, fontsize='large', fontweight='bold')
+    ax.imshow(np.array(encoded).reshape(1, -1),
                 cmap='binary',
                 aspect='auto',
                 interpolation='nearest')
@@ -258,10 +333,10 @@ def main(args: Namespace) -> None:
     '''
     Main entry point.
 
-        Parameters
-        ----------
-            args : Namespace
-                Parsed arguments from ArgumentParser
+    Parameters
+    ----------
+        args : Namespace
+            Parsed arguments from ArgumentParser
     '''
     if args.verbose:
         print(f"Generating a {args.type} barcode from the value: {args.value}")
@@ -271,10 +346,10 @@ def parse_arguments() -> Namespace:
     '''
     Returns parsed arguments using ArgumentParser.
 
-        Returns
-        -------
-            Namespace
-                Parsed arguments
+    Returns
+    -------
+        Namespace
+            Parsed arguments
     '''
     parser = ArgumentParser(prog='Barcode Generator',
                             description='Generates Barcodes',

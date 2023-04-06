@@ -1,2 +1,3 @@
 [MASTER]
+good-names=ax
 ignored-modules=os,pathlib,re,typing
