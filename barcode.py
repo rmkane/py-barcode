@@ -23,6 +23,7 @@ __maintainer__ = "rmkane"
 __email__ = "rmkane89@gmail.com"
 __status__ = "Development"
 
+from abc import ABC, abstractmethod
 from argparse import ArgumentParser, Namespace
 from typing import Any, TypeVar
 import os
@@ -57,7 +58,7 @@ def str_to_digits(value: str) -> list[int]:
     '''
     return [int(digit) for digit in list(value)]
 
-class Barcode:
+class Barcode(ABC):
     """
     A class that represents a barcode.
 
@@ -124,6 +125,7 @@ class Barcode:
         """
         return self.options.get('text', self.data) # .replace(/[A-D]/g, '')
 
+    @abstractmethod
     def encode(self) -> str:
         '''
         Encodes the data into an array of binary digits.
@@ -133,7 +135,6 @@ class Barcode:
             str
                 The encoded data
         '''
-        return ""
 
 # See:
 # - https://lindell.me/JsBarcode/
