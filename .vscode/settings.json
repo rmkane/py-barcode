@@ -7,6 +7,6 @@
     "--follow-imports=silent",
     "--show-column-numbers",
     "--strict",
-    "--warn-unused-ignores"
+    "--no-warn-unused-ignores"
   ]
 }

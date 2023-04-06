@@ -1,2 +1,2 @@
 [MASTER]
-ignored-modules=re,typing,os
+ignored-modules=os,pathlib,re,typing

@@ -3,6 +3,7 @@
 # See:
 # - https://www.programiz.com/python-programming/docstrings
 # - https://blog.codacy.com/3-popular-python-style-guides/
+# - https://docs.python-guide.org/writing/structure/
 
 """
 This script generates PNG barcode images.
@@ -23,6 +24,7 @@ __status__ = "Development"
 from argparse import ArgumentParser, Namespace
 from typing import Any, TypeVar
 import os
+import pathlib
 import re
 import matplotlib.pyplot as plt # type: ignore
 import numpy as np
@@ -217,25 +219,6 @@ class Codabar(Barcode):
         '''
         return '0'.join([CODABAR_DICT[token] for token in self.data])
 
-def create_dir(path: str) -> bool:
-    '''
-    Creates a directory path if it does not exist.
-
-        Parameters
-        ----------
-            path : str
-                The path to create
-
-        Returns
-        -------
-            bool
-                If the directory was created.
-    '''
-    if not os.path.exists(path):
-        os.makedirs(path)
-        return True
-    return False
-
 U = TypeVar('U', bound=Barcode)
 
 def create_barcode(barcode: U, filename: str, dpi: int) -> list[int]:
@@ -266,7 +249,7 @@ def create_barcode(barcode: U, filename: str, dpi: int) -> list[int]:
                 aspect='auto',
                 interpolation='nearest')
     export_path = filename or os.path.join(EXPORT_DIR, f"{barcode.name}-{barcode.data}.png")
-    create_dir(EXPORT_DIR)
+    pathlib.Path(EXPORT_DIR).mkdir(parents=True, exist_ok=True)
     plt.savefig(export_path)
     print(f"Successfully created barcode: {export_path}")
     return encoded
